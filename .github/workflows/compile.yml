@@ -1,0 +1,45 @@
+name: Compile Kmod for ARMv7
+
+on: [push, workflow_dispatch] # 允许手动点击按钮触发编译
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Cross Compiler Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf build-essential libncurses-dev bison flex libssl-dev libelf-dev
+
+      - name: Download & Prepare Linux Kernel Source
+        run: |
+          # ⚠️ 注意：这里的内核版本号必须高度匹配你玩客云宿主机的内核版本！
+          # 你可以在玩客云终端输入 `uname -r` 查看（例如 5.10.0）
+          KERNEL_VER="5.10" 
+          wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VER}.tar.xz
+          tar -xf linux-${KERNEL_VER}.tar.xz
+          mv linux-${KERNEL_VER} kernel-source
+
+      - name: Configure Kernel for ARMv7
+        run: |
+          cd kernel-source
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          make multi_v7_defconfig # 使用标准的 ARMv7 默认配置
+          make modules_prepare    # 准备编译模块所需的环境
+
+      - name: Compile Dummy Module
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          # 让 Makefile 引用刚刚准备好的内核源码目录进行编译
+          make -C kernel-source M=$PWD modules
+
+      - name: Upload Output Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kmod-dummy-armv7
+          path: dummy.ko # 编译出来的产物就是 .ko (Kernel Object) 文件
