@@ -18,7 +18,7 @@ jobs:
         run: |
           # ⚠️ 注意：这里的内核版本号必须高度匹配你玩客云宿主机的内核版本！
           # 你可以在玩客云终端输入 `uname -r` 查看（例如 5.10.0）
-          KERNEL_VER="5.10" 
+          KERNEL_VER="5.9.0-rc7" 
           wget https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VER}.tar.xz
           tar -xf linux-${KERNEL_VER}.tar.xz
           mv linux-${KERNEL_VER} kernel-source
